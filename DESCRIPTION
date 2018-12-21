@@ -1,6 +1,6 @@
 Package: variantBedOverlap
 Title: Calculates the overlap of variants in LD with features from BED files
-Version: 0.0.1
+Version: 0.1.0
 Authors@R: person("Leland", "Taylor", email = "leland@ebi.ac.uk",
     role = c("aut", "cre"))
 Description: Gets variants in LD with tag variant. Calculates the overlap of
