@@ -1,0 +1,94 @@
+---
+title: "variantBedOverlap"
+author: "Leland Taylor"
+date: "`r Sys.Date()`"
+output:
+    rmarkdown::html_vignette:
+        df_print: tibble
+    rmarkdown::html_document:
+        df_print: paged
+    rmarkdown::github_document:
+        df_print: kable
+    rmarkdown::pdf_document:
+        df_print: tibble
+vignette: >
+  %\VignetteIndexEntry{variantBedOverlap}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This document shows a demo of how to use variantBedOverlap. There is also a command line script.
+
+```{bash cl, echo=T, eval=F, results='asis'}
+# get the lib dir for variantBedOverlap
+install_dir=$(R --slave -e 'cat(find.package("variantBedOverlap"))')
+
+# see help options of command line script
+Rscript "$install_dir/exec/variant_bed_overlap.R" --help
+```
+
+## (1) Get variants in LD
+
+Get proxies from the 1000 Genomes Project via [proxysnps](https://github.com/slowkow/proxysnps).
+
+```{r proxysnps, echo=T, eval=T, results='asis'}
+snps_q <- proxysnps::get_proxies(query = "rs2072014", pop = "FIN")
+snps <- subset(snps_q, R.squared >= 0.8)
+```
+```{r df-snps, echo=T, eval=T, rows.print=10}
+#knitr::kable( head(snps, 10) )
+snps # enabled by setting --> df_print: paged
+```
+
+
+## (2) Get BED overlaps
+
+Get the overlaps of each variant (row) and genomic regions from a list of BED files. Here we load example BED files included in this package taken from Varsheny et al. 2017 (https://doi.org/10.1073/pnas.1621192114).
+
+```{r get_bed_overlaps, echo=T, eval=T, results='asis'}
+# few pre-packaged bed files from 
+# https://theparkerlab.med.umich.edu/data/papers/doi/10.1073/pnas.1621192114/
+dir <- system.file("extdata", package = "variantBedOverlap", mustWork = TRUE)
+
+# get overlaps with all bed files in directory
+snps_overlap <- variantBedOverlap::get_bed_overlaps(
+  df = snps,
+  dir = dir,
+  col_itemRgb = 5
+)
+```
+
+```{r df-snps_overlap, echo=T, eval=T, rows.print=10}
+snps_overlap
+```
+
+
+## (3) Plot the data
+
+Plot the overlap data. 
+
+```{r plot_overlaps, echo=T, eval=T, fig.width=7, fig.height=3, fig.show='hold'}
+# xid_solid_line = list of x-axis IDs to add a line through
+# varshney_chrhmm = flag to say assume BED file names are from Varshney et al
+#                   2017. Given that assumption clean up the names to make them
+#                   publication ready.
+lst <- variantBedOverlap::plot_overlaps(
+    df = snps_overlap,
+    xid_solid_line = c("rs2072014", "rs35045598"),
+    varshney_chrhmm = TRUE
+)
+print( lst$plt )
+```
+
+The output of plot_overlaps also contains the data underlying the plot. Note that *ID* is a factor now, sorted by *POS*. If varshney_chrhmm == TRUE, *bed_feature* will also be a factor sorted by *chrhmm_state*.
+
+```{r df-plot_overlaps, echo=T, eval=T, rows.print=10}
+lst$df
+```
