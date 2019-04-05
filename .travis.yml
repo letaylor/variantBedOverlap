@@ -1,0 +1,61 @@
+os:
+  - linux
+  - osx
+language: r
+r: bioc-release
+sudo: false
+cache: packages
+
+env:
+  global:
+    - PKG_NAME=variantBedOverlap
+
+# Install the required R packages and conda dependencies
+# UPDATE: because of issues with remotes and bioconductor, install manually
+before_install:
+  - R -e 'install.packages("BiocManager")'
+  - R -e 'BiocManager::install(update = FALSE, ask = FALSE)'
+  - R -e 'BiocManager::install("GenomicRanges", update = FALSE, ask = FALSE)'
+  - R -e 'install.packages("remotes")'
+  - R -e 'remotes::install_deps(dependencies = TRUE, upgrade = "never")'
+  - MINICONDA_OS=$(echo ${TRAVIS_OS_NAME} | sed s/linux/Linux/ | sed s/osx/MacOSX/)
+  - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-${MINICONDA_OS}-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-${MINICONDA_OS}-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p ${HOME}/miniconda
+  - export PATH="${HOME}/miniconda/bin:${PATH}"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda config --add channels letaylor
+  - conda config --add channels r
+  - conda config --add channels bioconda
+  - conda config --add channels conda-forge
+  - conda install conda-build
+  - conda install anaconda-client
+  - conda install conda-verify
+
+# Build the conda package
+install:
+  - conda build conda
+  - export CONDA_OUT_FILE=$(conda build conda --output)
+  - echo "CONDA_OUT_FILE=${CONDA_OUT_FILE}"
+  - conda install --use-local r-${PKG_NAME}
+
+# Run test
+# script:
+#   - nosetests tests
+
+# Change permissions for Anaconda deployment script
+after_success:
+  - chmod +x ./conda/deploy_anaconda.sh
+
+# Deploy to Anaconda.org
+deploy:
+  - provider: script
+    script: ./conda/deploy_anaconda.sh ${CONDA_OUT_FILE}
+    on:
+      branch: master
+    skip_cleanup: true
