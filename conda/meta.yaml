@@ -34,6 +34,7 @@ requirements:
     - bioconductor-s4vectors
     - bioconductor-iranges
     - bioconductor-genomicranges
+    - bioconductor-genomeinfodbdata
     - bioconductor-myvariant
     - r-proxysnps
   run:
@@ -47,6 +48,7 @@ requirements:
     - bioconductor-s4vectors
     - bioconductor-iranges
     - bioconductor-genomicranges
+    - bioconductor-genomeinfodbdata
     - bioconductor-myvariant
     - r-proxysnps
 
